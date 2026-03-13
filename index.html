@@ -37,9 +37,6 @@
         <button class="btn btn-icon" id="btn-theme-toggle" title="テーマ切替">
           <span id="theme-icon">🎨</span>
         </button>
-        <button class="btn btn-icon" id="btn-view-toggle" title="表示切替">
-          <span id="view-icon">📊</span>
-        </button>
       </div>
     </div>
     <!-- Progress Overview Bar -->
@@ -80,6 +77,14 @@
     </div>
   </div>
 
+  <!-- View Tabs (New Navigation) -->
+  <nav class="view-tabs-container">
+    <button class="view-tab active" data-view="list">📑 リスト</button>
+    <button class="view-tab" data-view="calendar">📅 カレンダー</button>
+    <button class="view-tab" data-view="kanban">📋 ボード</button>
+    <button class="view-tab" data-view="gantt">📊 ガント</button>
+  </nav>
+
   <!-- Toolbar -->
   <div class="toolbar" id="toolbar">
     <div class="toolbar-left">
@@ -114,6 +119,16 @@
       <button class="btn btn-add-phase" id="btn-add-phase">
         <span class="btn-icon-text">＋ 新しいフェーズを追加</span>
       </button>
+    </div>
+
+    <!-- View: Calendar -->
+    <div id="view-calendar" class="view">
+      <div id="calendar-container"></div>
+    </div>
+
+    <!-- View: Kanban Board -->
+    <div id="view-kanban" class="view">
+      <div id="kanban-container"></div>
     </div>
 
     <!-- View: Gantt Chart -->

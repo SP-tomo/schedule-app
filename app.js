@@ -51,9 +51,14 @@ let currentView = 'list';
 let editingTask = null;
 let editingPhase = null;
 let currentTheme = 'dark';
+
+// Filter State
 let searchQuery = '';
 let filterStatus = 'all';
 let filterAssignee = 'all';
+
+// Calendar State
+let currentCalendarDate = new Date();
 
 // Drag state
 let dragSource = null; // { phaseIdx, taskIdx }
@@ -411,11 +416,13 @@ function updateStats() {
 function render() {
     renderHeader();
     renderPhases();
-    updateAssigneeFilter();
+    updateAssigneeFilter(); // Keep these two calls as they are general UI updates
     updateStats();
-    if (currentView === 'gantt') {
-        renderGantt();
-    }
+
+    // Render other views if they are active
+    if (currentView === 'gantt') renderGantt();
+    if (currentView === 'calendar') renderCalendar();
+    if (currentView === 'kanban') renderKanban();
 }
 
 function renderHeader() {
@@ -1004,13 +1011,188 @@ function addNewPhase() {
 // =============================================
 // View Toggle
 // =============================================
-function toggleView() {
-    currentView = currentView === 'list' ? 'gantt' : 'list';
-    document.getElementById('view-list').classList.toggle('active', currentView === 'list');
-    document.getElementById('view-gantt').classList.toggle('active', currentView === 'gantt');
-    document.getElementById('view-icon').textContent = currentView === 'list' ? '📊' : '📋';
-    document.getElementById('btn-view-toggle').title = currentView === 'list' ? 'ガントチャート表示' : 'リスト表示';
-    if (currentView === 'gantt') renderGantt();
+function switchView(viewId) {
+    currentView = viewId;
+    
+    // Update tabs
+    document.querySelectorAll('.view-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.getAttribute('data-view') === viewId);
+    });
+
+    // Update view containers
+    document.getElementById('view-list').classList.toggle('active', viewId === 'list');
+    document.getElementById('view-calendar').classList.toggle('active', viewId === 'calendar');
+    document.getElementById('view-kanban').classList.toggle('active', viewId === 'kanban');
+    document.getElementById('view-gantt').classList.toggle('active', viewId === 'gantt');
+
+    // Render specific view if needed
+    if (viewId === 'gantt') renderGantt();
+    if (viewId === 'calendar') renderCalendar();
+    if (viewId === 'kanban') renderKanban();
+}
+
+function renderCalendar() {
+    const container = document.getElementById('calendar-container');
+    if (!container) return;
+    
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(firstDay.getDate() - firstDay.getDay()); // Start from Sunday
+    
+    const endDate = new Date(lastDay);
+    if (endDate.getDay() !== 6) {
+        endDate.setDate(lastDay.getDate() + (6 - lastDay.getDay())); // End on Saturday
+    }
+
+    // Collect all flat tasks
+    const allTasks = [];
+    if (appData && appData.phases) {
+        appData.phases.forEach(p => {
+            (p.tasks || []).forEach(t => {
+                if (matchesFilter(t)) allTasks.push({ ...t, phaseId: p.id });
+            });
+        });
+    }
+
+    let html = `
+        <div class="calendar-header">
+            <button class="calendar-nav-btn" onclick="changeCalendarMonth(-1)">◀ 前月</button>
+            <h2>${year}年 ${month + 1}月</h2>
+            <button class="calendar-nav-btn" onclick="changeCalendarMonth(1)">翌月 ▶</button>
+        </div>
+        <div class="calendar-grid">
+            <div class="calendar-day-header">日</div>
+            <div class="calendar-day-header">月</div>
+            <div class="calendar-day-header">火</div>
+            <div class="calendar-day-header">水</div>
+            <div class="calendar-day-header">木</div>
+            <div class="calendar-day-header">金</div>
+            <div class="calendar-day-header">土</div>
+    `;
+
+    let currentDate = new Date(startDate);
+    const todayIso = new Date().toISOString().split('T')[0];
+
+    while (currentDate <= endDate) {
+        // Adjust for local timezone to get correct ISO date string
+        const localDate = new Date(currentDate.getTime() - (currentDate.getTimezoneOffset() * 60000));
+        const dateIso = localDate.toISOString().split('T')[0];
+        const isCurrentMonth = currentDate.getMonth() === month;
+        const isToday = dateIso === todayIso;
+        
+        // Find tasks active on this day
+        const dayTasks = allTasks.filter(t => {
+            if (!t.start || !t.end) return false;
+            return dateIso >= t.start && dateIso <= t.end;
+        });
+
+        html += `
+            <div class="calendar-cell ${isCurrentMonth ? '' : 'other-month'} ${isToday ? 'today' : ''}">
+                <div class="calendar-date">${currentDate.getDate()}</div>
+                ${dayTasks.map(t => {
+                    const status = getTaskStatus(t);
+                    return `<div class="calendar-task ${status}" onclick="editTaskFromView('${t.id}', '${t.phaseId}')" title="${escapeHtml(t.name)}">
+                        ${escapeHtml(t.name)}
+                    </div>`;
+                }).join('')}
+            </div>
+        `;
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    html += `</div>`;
+    container.innerHTML = html;
+}
+
+// Global function for calendar navigation
+window.changeCalendarMonth = function(delta) {
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+    renderCalendar();
+};
+
+window.editTaskFromView = function(taskId, phaseId) {
+    const phase = appData.phases.find(p => p.id === phaseId);
+    if (!phase) return;
+    const task = phase.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    editingPhase = phaseId;
+    editingTask = task;
+    
+    document.getElementById('edit-task-name').value = task.name || '';
+    document.getElementById('edit-task-assignee').value = task.assignee || '';
+    document.getElementById('edit-task-start').value = task.start || '';
+    document.getElementById('edit-task-end').value = task.end || '';
+    document.getElementById('edit-task-progress').value = (task.progress || 0) * 100;
+    document.getElementById('progress-display').textContent = ((task.progress || 0) * 100) + '%';
+    document.getElementById('progress-preview-bar').style.width = ((task.progress || 0) * 100) + '%';
+    document.getElementById('edit-task-memo').value = task.memo || '';
+    
+    const phaseSelect = document.getElementById('edit-task-phase');
+    phaseSelect.innerHTML = appData.phases.map(p => 
+        `<option value="${escapeHtml(p.id)}" ${p.id === phaseId ? 'selected' : ''}>${escapeHtml(p.name)}</option>`
+    ).join('');
+    
+    document.getElementById('btn-duplicate-task').style.display = 'block';
+    
+    const modal = document.getElementById('task-modal');
+    document.getElementById('modal-title').textContent = 'タスクを編集';
+    
+    document.getElementById('modal-overlay').classList.add('active');
+    modal.classList.add('active');
+};
+
+function renderKanban() {
+    const container = document.getElementById('kanban-container');
+    if (!container) return;
+
+    // Initialize columns
+    const columns = {
+        'not-started': { label: '🔘 未着手', tasks: [] },
+        'in-progress': { label: '🔵 進行中', tasks: [] },
+        'completed':   { label: '✅ 完了', tasks: [] },
+        'overdue':     { label: '🔴 遅延', tasks: [] }
+    };
+
+    if (appData && appData.phases) {
+        appData.phases.forEach(p => {
+            (p.tasks || []).forEach(t => {
+                if (matchesFilter(t)) {
+                    const status = getTaskStatus(t);
+                    if (columns[status]) columns[status].tasks.push({ ...t, phaseId: p.id, phaseName: p.name });
+                }
+            });
+        });
+    }
+
+    let html = '';
+    for (const [status, col] of Object.entries(columns)) {
+        html += `
+            <div class="kanban-col" data-status="${status}">
+                <div class="kanban-col-header">
+                    <span>${col.label}</span>
+                    <span class="kanban-count">${col.tasks.length}</span>
+                </div>
+                <div class="kanban-cards">
+                    ${col.tasks.map(t => `
+                        <div class="kanban-card" onclick="editTaskFromView('${t.id}', '${t.phaseId}')">
+                            <div class="kanban-card-title">${escapeHtml(t.name)}</div>
+                            <div class="kanban-card-meta">
+                                <span class="kanban-card-assignee">${escapeHtml(t.assignee || '未定')}</span>
+                                ${t.start && t.end ? `<span class="kanban-card-date">${formatDate(t.start)} - ${formatDate(t.end)}</span>` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
 }
 
 // =============================================
@@ -1035,7 +1217,13 @@ function showToast(message, type = 'info') {
 function initEventListeners() {
     // Top right header buttons
     document.getElementById('btn-theme-toggle').addEventListener('click', toggleThemePicker);
-    document.getElementById('btn-view-toggle').addEventListener('click', toggleView);
+    
+    // View tabs
+    document.querySelectorAll('.view-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            switchView(e.currentTarget.getAttribute('data-view'));
+        });
+    });
     
     // Backup & Restore
     document.getElementById('btn-export-data').addEventListener('click', exportData);
