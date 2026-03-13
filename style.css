@@ -6,7 +6,26 @@
    Theme Definitions
    ============================================= */
 
-/* Dark (Default) */
+/* Light (Default) */
+:root, [data-theme="light"] {
+  --bg-primary: #f5f6fa;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f1f5;
+  --bg-input: #eef0f5;
+  --bg-modal: #ffffff;
+  --border-color: #dce0eb;
+  --border-hover: #c5c9d6;
+  --text-primary: #1a1e2e;
+  --text-secondary: #555b6e;
+  --text-muted: #8b90a0;
+  --text-accent: #5b5ff0;
+  --header-bg: linear-gradient(135deg, #ffffff 0%, #f5f6fa 100%);
+  --shadow-color: rgba(0,0,0,0.08);
+  --app-bg-image: none;
+}
+
+/* Dark */
 [data-theme="dark"] {
   --bg-primary: #0f1117;
   --bg-secondary: #161822;
@@ -22,25 +41,7 @@
   --text-accent: #818cf8;
   --header-bg: linear-gradient(135deg, #161822 0%, #1c1f2e 100%);
   --shadow-color: rgba(0,0,0,0.3);
-}
-
-/* Light */
-[data-theme="light"] {
-  --bg-primary: #f5f6fa;
-  --bg-secondary: #ffffff;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f0f1f5;
-  --bg-input: #eef0f5;
-  --bg-modal: #ffffff;
-  --border-color: #dce0eb;
-  --border-hover: #c5c9d6;
-  --text-primary: #1a1e2e;
-  --text-secondary: #555b6e;
-  --text-muted: #8b90a0;
-  --text-accent: #5b5ff0;
-  --header-bg: linear-gradient(135deg, #ffffff 0%, #f5f6fa 100%);
-  --shadow-color: rgba(0,0,0,0.08);
-  --progress-bg: #dce0eb;
+  --app-bg-image: none;
 }
 
 /* Midnight */
@@ -220,13 +221,17 @@ html {
 }
 
 body {
-  font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--bg-primary);
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg-primary);
+  background-image: var(--app-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   color: var(--text-primary);
-  min-height: 100vh;
   line-height: 1.6;
-  overflow-x: hidden;
-  transition: background 0.4s ease, color 0.3s ease;
+  min-height: 100vh;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 /* Scrollbar styling */
@@ -1505,16 +1510,17 @@ textarea:focus {
    Kanban Board View
    ============================================= */
 #view-kanban {
-  display: flex;
   gap: 20px;
   overflow-x: auto;
   padding-bottom: 20px;
   min-height: 600px;
+  align-items: flex-start;
+  flex-wrap: nowrap;
 }
 
 .kanban-col {
-  flex: 1;
-  min-width: 300px;
+  flex: 0 0 320px;
+  min-width: 320px;
   background: var(--bg-body);
   border-radius: var(--radius-lg);
   padding: 16px;
@@ -1522,6 +1528,12 @@ textarea:focus {
   flex-direction: column;
   gap: 12px;
   border: 1px solid var(--border-color);
+  max-height: 80vh;
+}
+
+.kanban-col.drag-over {
+  background: var(--bg-hover);
+  border-color: var(--primary);
 }
 
 .kanban-col-header {
@@ -1553,6 +1565,8 @@ textarea:focus {
   flex-direction: column;
   gap: 10px;
   min-height: 50px; /* Drop target area */
+  overflow-y: auto;
+  padding-bottom: 30px; /* Padding for easier dropping at bottom */
 }
 
 .kanban-card {
@@ -1560,12 +1574,19 @@ textarea:focus {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 14px;
-  cursor: pointer;
+  cursor: grab;
   box-shadow: var(--shadow-sm);
   transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.kanban-card:active {
+  cursor: grabbing;
+}
+.kanban-card.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
 }
 .kanban-card:hover {
   transform: translateY(-2px);
@@ -1646,3 +1667,27 @@ textarea:focus {
   .toolbar-left { flex-direction: column; align-items: stretch; }
   .search-box { min-width: auto; }
 }
+
+ / *   V i e w   L a y o u t   F i x e s   * / 
+ . v i e w   {   d i s p l a y :   n o n e   ! i m p o r t a n t ;   } 
+ . v i e w . a c t i v e   {   d i s p l a y :   b l o c k   ! i m p o r t a n t ;   } 
+ # v i e w - k a n b a n . a c t i v e   {   
+         d i s p l a y :   f l e x   ! i m p o r t a n t ;   
+         f l e x - w r a p :   n o w r a p   ! i m p o r t a n t ; 
+         a l i g n - i t e m s :   f l e x - s t a r t ; 
+         o v e r f l o w - x :   a u t o ; 
+ } 
+  
+ 
+ # k a n b a n - c o n t a i n e r   { 
+         d i s p l a y :   f l e x ; 
+         g a p :   2 0 p x ; 
+         a l i g n - i t e m s :   f l e x - s t a r t ; 
+         f l e x - w r a p :   n o w r a p   ! i m p o r t a n t ; 
+         o v e r f l o w - x :   a u t o ; 
+         p a d d i n g - b o t t o m :   2 0 p x ; 
+         m i n - h e i g h t :   5 0 0 p x ; 
+         w i d t h :   1 0 0 % ; 
+ } 
+  
+ 

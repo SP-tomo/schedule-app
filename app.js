@@ -50,7 +50,7 @@ let appData = null;
 let currentView = 'list';
 let editingTask = null;
 let editingPhase = null;
-let currentTheme = 'dark';
+let currentTheme = 'light';
 
 // Filter State
 let searchQuery = '';
@@ -174,10 +174,10 @@ function showConfirm(message) {
 // =============================================
 // Theme Management
 // =============================================
-const THEMES = ['dark', 'light', 'midnight', 'sakura', 'ocean', 'forest'];
+const THEMES = ['dark', 'light', 'midnight', 'sakura', 'ocean', 'forest', 'nature', 'city'];
 
 function setTheme(themeName) {
-    if (!THEMES.includes(themeName)) themeName = 'dark';
+    if (!THEMES.includes(themeName)) themeName = 'light';
     currentTheme = themeName;
     document.documentElement.setAttribute('data-theme', themeName);
     localStorage.setItem('undoukai-theme', themeName);
@@ -188,7 +188,7 @@ function setTheme(themeName) {
 
 function loadTheme() {
     const saved = localStorage.getItem('undoukai-theme');
-    setTheme(saved || 'dark');
+    setTheme(saved || 'light');
 }
 
 function toggleThemePicker() {
@@ -1115,6 +1115,9 @@ window.changeCalendarMonth = function(delta) {
 };
 
 window.editTaskFromView = function(taskId, phaseId) {
+    // Avoid opening modal if we just dragged
+    if (window.isDraggingKanban) return;
+    
     const phase = appData.phases.find(p => p.id === phaseId);
     if (!phase) return;
     const task = phase.tasks.find(t => t.id === taskId);
@@ -1172,14 +1175,14 @@ function renderKanban() {
     let html = '';
     for (const [status, col] of Object.entries(columns)) {
         html += `
-            <div class="kanban-col" data-status="${status}">
+            <div class="kanban-col" data-status="${status}" ondragover="handleKanbanDragOver(event)" ondragleave="handleKanbanDragLeave(event)" ondrop="handleKanbanDrop(event, '${status}')">
                 <div class="kanban-col-header">
                     <span>${col.label}</span>
                     <span class="kanban-count">${col.tasks.length}</span>
                 </div>
                 <div class="kanban-cards">
                     ${col.tasks.map(t => `
-                        <div class="kanban-card" onclick="editTaskFromView('${t.id}', '${t.phaseId}')">
+                        <div class="kanban-card" draggable="true" ondragstart="handleKanbanDragStart(event, '${t.id}', '${t.phaseId}')" ondragend="handleKanbanDragEnd(event)" onclick="editTaskFromView('${t.id}', '${t.phaseId}')">
                             <div class="kanban-card-title">${escapeHtml(t.name)}</div>
                             <div class="kanban-card-meta">
                                 <span class="kanban-card-assignee">${escapeHtml(t.assignee || '未定')}</span>
@@ -1193,6 +1196,72 @@ function renderKanban() {
     }
 
     container.innerHTML = html;
+}
+
+// Kanban Drag and Drop Handlers
+window.isDraggingKanban = false;
+
+window.handleKanbanDragStart = function(e, taskId, phaseId) {
+    window.isDraggingKanban = true;
+    e.currentTarget.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', JSON.stringify({ taskId, phaseId }));
+    e.dataTransfer.effectAllowed = 'move';
+};
+
+window.handleKanbanDragEnd = function(e) {
+    e.currentTarget.classList.remove('dragging');
+    setTimeout(() => { window.isDraggingKanban = false; }, 100);
+    document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'));
+};
+
+window.handleKanbanDragOver = function(e) {
+    e.preventDefault(); // Necessary to allow dropping
+    e.dataTransfer.dropEffect = 'move';
+    const col = e.currentTarget;
+    if (!col.classList.contains('drag-over')) {
+        col.classList.add('drag-over');
+    }
+};
+
+window.handleKanbanDragLeave = function(e) {
+    e.currentTarget.classList.remove('drag-over');
+};
+
+window.handleKanbanDrop = function(e, newStatus) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+
+    try {
+        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+        const phase = appData.phases.find(p => p.id === data.phaseId);
+        if (!phase) return;
+        const task = phase.tasks.find(t => t.id === data.taskId);
+        if (!task) return;
+
+        // Determine new progress based on dropped column
+        let newProgress = task.progress;
+        if (newStatus === 'not-started') {
+            newProgress = 0;
+        } else if (newStatus === 'in-progress') {
+            // Only update to 50% if it wasn't already actively in progress (e.g. 0% or 100%)
+            if ((task.progress || 0) <= 0 || (task.progress || 0) >= 1) {
+                newProgress = 0.5;
+            }
+        } else if (newStatus === 'completed') {
+            newProgress = 1;
+        }
+
+        // If 'overdue', we don't automatically change progress, we let it stay as is.
+        // It's mostly a display status based on dates.
+        
+        task.progress = newProgress;
+        saveData();
+        render();
+        showToast(`タスクの状況を更新しました`, 'success');
+
+    } catch (err) {
+        console.error('Drop error:', err);
+    }
 }
 
 // =============================================
