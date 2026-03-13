@@ -1846,27 +1846,40 @@ html[data-theme="city"] body {
 }
 
 /* =============================================
-   MOBILE VIEW & RESPONSIVE SCROLL FIXES
+   MOBILE & TABLET RESPONSIVE OPTIMIZATION
    ============================================= */
-@media (max-width: 768px) {
-  /* Fix Calendar Overlap/Scale */
+@media (max-width: 1024px) {
+  /* Restore Scrolling for Tablet/Mobile */
+  html, body {
+      overflow-x: hidden !important;
+      overflow-y: auto !important;
+      height: auto !important;
+      -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Fix Calendar Overlap/Scale for Tablet */
   #calendar-container {
       overflow-x: auto !important;
-      padding-bottom: 20px !important;
+      padding-bottom: 24px !important;
       -webkit-overflow-scrolling: touch !important;
       width: 100% !important;
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius-md);
   }
   .calendar-grid {
-      min-width: 700px !important;
+      /* Force horizontal scroll on portrait devices including iPad (768px) */
+      min-width: 950px !important; 
   }
   .calendar-cell {
-      min-height: 80px !important;
-      padding: 4px !important;
+      min-height: 100px !important; /* Slightly smaller cells for tablets */
+      padding: 6px !important;
   }
   .calendar-task {
-      font-size: 0.65rem !important;
-      padding: 2px 4px !important;
-      white-space: normal !important;
+      font-size: 0.7rem !important;
+      padding: 3px 6px !important;
+      white-space: nowrap !important;
+      text-overflow: ellipsis;
+      overflow: hidden;
   }
 
   /* Fix Gantt Chart Scale */
@@ -1875,31 +1888,59 @@ html[data-theme="city"] body {
       -webkit-overflow-scrolling: touch !important;
   }
   .gantt-container {
-      min-width: 600px !important;
+      min-width: 800px !important;
   }
   
   /* Fix Task Modal Form Scale */
   .modal {
-      width: 95% !important;
-      margin: 10px auto !important;
-      max-height: 90vh !important;
+      width: 92% !important;
+      margin: 20px auto !important;
+      max-height: 85vh !important;
       overflow-y: auto !important;
       box-sizing: border-box;
+      padding: 10px !important;
   }
   .modal-body {
       padding: 12px !important;
   }
   .form-row {
       flex-direction: column !important;
-      gap: 10px !important;
+      gap: 12px !important;
   }
   
-  /* Make Tabs scrollable if they overflow */
+  /* Tabs Scrollable */
   .view-tabs {
       flex-wrap: nowrap !important;
       overflow-x: auto !important;
       -webkit-overflow-scrolling: touch !important;
-      padding-bottom: 4px !important;
+      padding-bottom: 8px !important;
       justify-content: flex-start !important;
+      gap: 8px !important;
+  }
+  .tab-btn {
+      padding: 8px 16px !important;
+      font-size: 0.9rem !important;
+      flex-shrink: 0 !important;
+  }
+
+  /* Header adjustments for Tablet */
+  .header-content {
+      padding: 12px 20px !important;
+  }
+  .header-text h1 {
+      font-size: 1.2rem !important;
+  }
+}
+
+/* Specific Small Mobile Fixes */
+@media (max-width: 600px) {
+  .calendar-grid {
+      min-width: 750px !important;
+  }
+  .calendar-cell {
+      min-height: 80px !important;
+  }
+  .calendar-task {
+      font-size: 0.65rem !important;
   }
 }
