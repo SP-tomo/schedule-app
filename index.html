@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026運動会 スケジュール管理 | 長田須磨地区</title>
+  <meta name="description" content="長田須磨地区 2026年運動会のスケジュール管理アプリ。リアルタイムでタスクの進捗を共有・管理できます。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header id="app-header">
+    <div class="header-content">
+      <div class="header-left">
+        <div class="logo-icon">🏅</div>
+        <div class="header-text">
+          <h1 id="project-title">2026運動会　スケジュール</h1>
+          <p id="project-org" class="subtitle">長田須磨地区</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="connection-status" id="connection-status">
+          <span class="status-dot"></span>
+          <span class="status-text">接続中...</span>
+        </div>
+        <div class="header-date" id="header-date"></div>
+        <button class="btn btn-icon" id="btn-theme-toggle" title="テーマ切替">
+          <span id="theme-icon">🎨</span>
+        </button>
+        <button class="btn btn-icon" id="btn-view-toggle" title="表示切替">
+          <span id="view-icon">📊</span>
+        </button>
+      </div>
+    </div>
+    <!-- Progress Overview Bar -->
+    <div class="overall-progress-bar">
+      <div class="overall-progress-fill" id="overall-progress-fill"></div>
+      <span class="overall-progress-text" id="overall-progress-text">0%</span>
+    </div>
+  </header>
+
+  <!-- Theme Picker Dropdown -->
+  <div class="theme-picker" id="theme-picker">
+    <div class="theme-picker-title">テーマを選択</div>
+    <div class="theme-picker-grid">
+      <button class="theme-option" data-theme="dark" title="ダーク">
+        <div class="theme-preview dark-preview"></div>
+        <span>ダーク</span>
+      </button>
+      <button class="theme-option" data-theme="light" title="ライト">
+        <div class="theme-preview light-preview"></div>
+        <span>ライト</span>
+      </button>
+      <button class="theme-option" data-theme="midnight" title="ミッドナイト">
+        <div class="theme-preview midnight-preview"></div>
+        <span>ミッドナイト</span>
+      </button>
+      <button class="theme-option" data-theme="sakura" title="桜">
+        <div class="theme-preview sakura-preview"></div>
+        <span>桜</span>
+      </button>
+      <button class="theme-option" data-theme="ocean" title="オーシャン">
+        <div class="theme-preview ocean-preview"></div>
+        <span>オーシャン</span>
+      </button>
+      <button class="theme-option" data-theme="forest" title="フォレスト">
+        <div class="theme-preview forest-preview"></div>
+        <span>フォレスト</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar" id="toolbar">
+    <div class="toolbar-left">
+      <div class="search-box" id="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="タスクを検索...">
+        <button class="search-clear" id="search-clear" title="クリア">✕</button>
+      </div>
+      <div class="filter-group">
+        <select id="filter-status" class="filter-select">
+          <option value="all">すべてのステータス</option>
+          <option value="not-started">🔘 未着手</option>
+          <option value="in-progress">🔵 進行中</option>
+          <option value="completed">✅ 完了</option>
+          <option value="overdue">🔴 遅延</option>
+        </select>
+        <select id="filter-assignee" class="filter-select">
+          <option value="all">すべての担当者</option>
+        </select>
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <div class="stats-bar" id="stats-bar"></div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main id="app-main">
+    <!-- View: Task List -->
+    <div id="view-list" class="view active">
+      <div id="phases-container"></div>
+      <button class="btn btn-add-phase" id="btn-add-phase">
+        <span class="btn-icon-text">＋ 新しいフェーズを追加</span>
+      </button>
+    </div>
+
+    <!-- View: Gantt Chart -->
+    <div id="view-gantt" class="view">
+      <div class="gantt-wrapper">
+        <div class="gantt-container" id="gantt-container"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Task Edit Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="task-modal">
+      <div class="modal-header">
+        <h2 id="modal-title">タスクを編集</h2>
+        <button class="btn btn-icon modal-close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="edit-task-name">タスク名</label>
+          <input type="text" id="edit-task-name" placeholder="タスク名を入力">
+        </div>
+        <div class="form-group">
+          <label for="edit-task-assignee">担当者</label>
+          <input type="text" id="edit-task-assignee" placeholder="担当者を入力">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-task-start">開始日</label>
+            <input type="date" id="edit-task-start">
+          </div>
+          <div class="form-group">
+            <label for="edit-task-end">終了日</label>
+            <input type="date" id="edit-task-end">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="edit-task-progress">進捗状況: <span id="progress-display">0%</span></label>
+          <input type="range" id="edit-task-progress" min="0" max="100" value="0">
+          <div class="progress-preview">
+            <div class="progress-preview-bar" id="progress-preview-bar"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="edit-task-memo">メモ</label>
+          <textarea id="edit-task-memo" placeholder="メモを入力..." rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="edit-task-phase">所属フェーズ</label>
+          <select id="edit-task-phase" class="filter-select full-width"></select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="modal-footer-left">
+          <button class="btn btn-danger" id="btn-delete-task">🗑️ 削除</button>
+          <button class="btn btn-secondary" id="btn-duplicate-task" title="複製">📋 複製</button>
+        </div>
+        <div class="modal-footer-right">
+          <button class="btn btn-secondary" id="btn-cancel-edit">キャンセル</button>
+          <button class="btn btn-primary" id="btn-save-task">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase Edit Modal -->
+  <div class="modal-overlay" id="phase-modal-overlay">
+    <div class="modal modal-sm" id="phase-modal">
+      <div class="modal-header">
+        <h2 id="phase-modal-title">フェーズを編集</h2>
+        <button class="btn btn-icon modal-close" id="phase-modal-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="edit-phase-name">フェーズ名</label>
+          <input type="text" id="edit-phase-name" placeholder="フェーズ名を入力">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger" id="btn-delete-phase">🗑️ 削除</button>
+        <div class="modal-footer-right">
+          <button class="btn btn-secondary" id="btn-cancel-phase">キャンセル</button>
+          <button class="btn btn-primary" id="btn-save-phase">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Dialog -->
+  <div class="modal-overlay" id="confirm-overlay">
+    <div class="modal modal-confirm">
+      <div class="confirm-icon">⚠️</div>
+      <p class="confirm-message" id="confirm-message">本当に削除しますか？</p>
+      <div class="confirm-actions">
+        <button class="btn btn-secondary" id="confirm-cancel">キャンセル</button>
+        <button class="btn btn-danger-solid" id="confirm-ok">削除する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
