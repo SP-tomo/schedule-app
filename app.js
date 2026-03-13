@@ -280,6 +280,65 @@ function updateConnectionStatus(status) {
 }
 
 // =============================================
+// Backup and Restore
+// =============================================
+function exportData() {
+    if (!appData) return;
+    const dataStr = JSON.stringify(appData, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    
+    // YYYYMMDD_HHMM format for filename
+    const now = new Date();
+    const dateStr = now.getFullYear() +
+        String(now.getMonth() + 1).padStart(2, '0') +
+        String(now.getDate()).padStart(2, '0') + "_" +
+        String(now.getHours()).padStart(2, '0') +
+        String(now.getMinutes()).padStart(2, '0');
+        
+    a.download = `schedule_backup_${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('バックアップを保存しました', 'success');
+}
+
+async function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+        const confirmRestore = await showConfirm('選択したバックアップデータで現在の状態を上書きします。よろしいですか？');
+        if (!confirmRestore) {
+            event.target.value = ''; // Reset input
+            return;
+        }
+
+        const text = await file.text();
+        const importedData = JSON.parse(text);
+
+        // Basic validation
+        if (!importedData || !importedData.project || !Array.isArray(importedData.phases)) {
+            throw new Error("無効なデータ形式です。");
+        }
+
+        appData = importedData;
+        saveData(); // Saves to Firebase & LocalStorage
+        render();
+        showToast('データを復元しました', 'success');
+    } catch (e) {
+        console.error('Import error:', e);
+        showToast('データの読み込みに失敗しました', 'error');
+    } finally {
+        event.target.value = ''; // Reset input
+    }
+}
+
+// =============================================
 // Filtering & Search
 // =============================================
 function matchesFilter(task) {
@@ -974,30 +1033,35 @@ function showToast(message, type = 'info') {
 // Event Listeners
 // =============================================
 function initEventListeners() {
-    // View toggle
+    // Top right header buttons
+    document.getElementById('btn-theme-toggle').addEventListener('click', toggleThemePicker);
     document.getElementById('btn-view-toggle').addEventListener('click', toggleView);
+    
+    // Backup & Restore
+    document.getElementById('btn-export-data').addEventListener('click', exportData);
+    const importInput = document.getElementById('import-file-input');
+    document.getElementById('btn-import-data').addEventListener('click', () => importInput.click());
+    importInput.addEventListener('change', importData);
 
-    // Add phase
-    document.getElementById('btn-add-phase').addEventListener('click', addNewPhase);
-
-    // Theme toggle
-    document.getElementById('btn-theme-toggle').addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleThemePicker();
+    // Click outside theme picker to close
+    document.addEventListener('click', (e) => {
+        const picker = document.getElementById('theme-picker');
+        const btn = document.getElementById('btn-theme-toggle');
+        if (picker.classList.contains('active') && !picker.contains(e.target) && !btn.contains(e.target)) {
+            closeThemePicker();
+        }
     });
 
+    // Theme options
     document.querySelectorAll('.theme-option').forEach(btn => {
-        btn.addEventListener('click', () => {
-            setTheme(btn.getAttribute('data-theme'));
+        btn.addEventListener('click', (e) => {
+            setTheme(e.currentTarget.getAttribute('data-theme'));
             closeThemePicker();
         });
     });
 
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.theme-picker') && !e.target.closest('#btn-theme-toggle')) {
-            closeThemePicker();
-        }
-    });
+    // Add phase
+    document.getElementById('btn-add-phase').addEventListener('click', addNewPhase);
 
     // Task modal
     document.getElementById('modal-close').addEventListener('click', closeTaskModal);
