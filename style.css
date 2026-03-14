@@ -1445,6 +1445,8 @@ textarea:focus {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   overflow: hidden;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .calendar-day-header {
@@ -1708,7 +1710,7 @@ textarea:focus {
     overflow-y: hidden !important;
     height: 100% !important;
     width: 100% !important;
-    padding: 16px 24px !important;
+    padding: 16px 32px 32px 24px !important; /* Increased right padding to prevent clipping */
     gap: 16px !important;
 }
 .kanban-col {
@@ -1831,6 +1833,29 @@ textarea:focus {
     cursor: grab !important;
 }
 
+/* Visibility enhancements for Image Themes */
+html[data-theme="nature"] .kanban-col,
+html[data-theme="city"] .kanban-col {
+    background-color: rgba(240, 241, 244, 0.95) !important;
+    backdrop-filter: blur(5px);
+}
+
+html[data-theme="nature"] .calendar-cell,
+html[data-theme="city"] .calendar-cell {
+    background-color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html[data-theme="nature"] .calendar-day-header,
+html[data-theme="city"] .calendar-day-header {
+    background-color: rgba(245, 246, 250, 0.98) !important;
+}
+
+html[data-theme="nature"] .phase-card,
+html[data-theme="city"] .phase-card {
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(5px);
+}
+
 /* Background Image Fallbacks */
 html[data-theme="nature"] body {
     background-image: url('bg_nature.png') !important;
@@ -1860,15 +1885,17 @@ html[data-theme="city"] body {
   /* Fix Calendar Overlap/Scale for Tablet */
   #calendar-container {
       overflow-x: auto !important;
-      padding-bottom: 24px !important;
+      padding-bottom: 32px !important;
       -webkit-overflow-scrolling: touch !important;
       width: 100% !important;
       background: rgba(255,255,255,0.05);
       border-radius: var(--radius-md);
+      box-sizing: border-box;
   }
   .calendar-grid {
-      /* Force horizontal scroll on portrait devices including iPad (768px) */
-      min-width: 950px !important; 
+      /* Force horizontal scroll on portrait devices plus extra padding for Saturday */
+      min-width: 1000px !important; 
+      margin-right: 24px !important;
   }
   .calendar-cell {
       min-height: 100px !important; /* Slightly smaller cells for tablets */
