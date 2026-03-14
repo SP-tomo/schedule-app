@@ -1118,35 +1118,32 @@ window.editTaskFromView = function(taskId, phaseId) {
     // Avoid opening modal if we just dragged
     if (window.isDraggingKanban) return;
     
-    const phase = appData.phases.find(p => p.id === phaseId);
-    if (!phase) return;
-    const task = phase.tasks.find(t => t.id === taskId);
-    if (!task) return;
+    // Find numeric indices that saveTask() expects
+    let foundPhaseIdx = -1;
+    let foundTaskIdx = -1;
     
-    editingPhase = phaseId;
-    editingTask = task;
+    for (let pi = 0; pi < appData.phases.length; pi++) {
+        if (appData.phases[pi].id === phaseId) {
+            const tasks = appData.phases[pi].tasks || [];
+            for (let ti = 0; ti < tasks.length; ti++) {
+                if (tasks[ti].id === taskId) {
+                    foundPhaseIdx = pi;
+                    foundTaskIdx = ti;
+                    break;
+                }
+            }
+            if (foundTaskIdx >= 0) break;
+        }
+    }
     
-    document.getElementById('edit-task-name').value = task.name || '';
-    document.getElementById('edit-task-assignee').value = task.assignee || '';
-    document.getElementById('edit-task-start').value = task.start || '';
-    document.getElementById('edit-task-end').value = task.end || '';
-    document.getElementById('edit-task-progress').value = (task.progress || 0) * 100;
-    document.getElementById('progress-display').textContent = ((task.progress || 0) * 100) + '%';
-    document.getElementById('progress-preview-bar').style.width = ((task.progress || 0) * 100) + '%';
-    document.getElementById('edit-task-memo').value = task.memo || '';
+    if (foundPhaseIdx < 0 || foundTaskIdx < 0) {
+        showToast('タスクが見つかりません', 'error');
+        return;
+    }
     
-    const phaseSelect = document.getElementById('edit-task-phase');
-    phaseSelect.innerHTML = appData.phases.map(p => 
-        `<option value="${escapeHtml(p.id)}" ${p.id === phaseId ? 'selected' : ''}>${escapeHtml(p.name)}</option>`
-    ).join('');
-    
-    document.getElementById('btn-duplicate-task').style.display = 'block';
-    
-    const modal = document.getElementById('task-modal');
-    document.getElementById('modal-title').textContent = 'タスクを編集';
-    
-    document.getElementById('modal-overlay').classList.add('active');
-    modal.classList.add('active');
+    // Delegate to openTaskModal which sets editingTask = { phaseIdx, taskIdx }
+    // This ensures saveTask() can correctly find and update the task
+    openTaskModal(foundPhaseIdx, foundTaskIdx);
 };
 
 function renderKanban() {

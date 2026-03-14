@@ -1856,6 +1856,83 @@ html[data-theme="city"] .phase-card {
     backdrop-filter: blur(5px);
 }
 
+/* Gantt Chart Visibility on Image Themes */
+html[data-theme="nature"] .gantt-header,
+html[data-theme="city"] .gantt-header {
+    background-color: rgba(245, 246, 250, 0.97) !important;
+    backdrop-filter: blur(5px);
+}
+
+html[data-theme="nature"] .gantt-row,
+html[data-theme="city"] .gantt-row {
+    background-color: rgba(255, 255, 255, 0.93) !important;
+    backdrop-filter: blur(3px);
+}
+
+html[data-theme="nature"] .gantt-row.phase-row,
+html[data-theme="city"] .gantt-row.phase-row {
+    background-color: rgba(240, 241, 250, 0.97) !important;
+}
+
+html[data-theme="nature"] .gantt-row:hover,
+html[data-theme="city"] .gantt-row:hover {
+    background-color: rgba(235, 238, 248, 0.97) !important;
+}
+
+html[data-theme="nature"] .gantt-wrapper,
+html[data-theme="city"] .gantt-wrapper {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-lg);
+    padding: 4px;
+}
+
+/* Calendar Container on Image Themes */
+html[data-theme="nature"] .calendar-header,
+html[data-theme="city"] .calendar-header {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+}
+
+/* Header & Toolbar on Image Themes */
+html[data-theme="nature"] #app-header,
+html[data-theme="city"] #app-header {
+    background: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: blur(10px);
+}
+
+html[data-theme="nature"] .toolbar,
+html[data-theme="city"] .toolbar {
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(5px);
+    border-radius: var(--radius-md);
+}
+
+html[data-theme="nature"] .view-tabs,
+html[data-theme="city"] .view-tabs {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+    border-radius: var(--radius-md);
+    padding: 4px;
+}
+
+html[data-theme="nature"] .kanban-card,
+html[data-theme="city"] .kanban-card {
+    background-color: rgba(255, 255, 255, 0.98) !important;
+}
+
+/* Modal on Image Themes */
+html[data-theme="nature"] .modal,
+html[data-theme="city"] .modal {
+    background-color: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(10px);
+}
+
+html[data-theme="nature"] .theme-picker,
+html[data-theme="city"] .theme-picker {
+    background-color: rgba(255, 255, 255, 0.97) !important;
+    backdrop-filter: blur(10px);
+}
+
 /* Background Image Fallbacks */
 html[data-theme="nature"] body {
     background-image: url('bg_nature.png') !important;
